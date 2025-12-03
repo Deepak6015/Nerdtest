@@ -1,0 +1,13 @@
+<h1>All Products</h1>
+<a href="{% url 'product_add' %}" style="display:inline-block; padding:8px 12px; background-color:green; color:white; text-decoration:none; border-radius:4px; margin-bottom:10px;">
+    Add Product
+</a>
+<ul>
+    {% for p in products %}
+        <li>
+            <!-- Link product name to its detail page -->
+            <a href="{% url 'product_detail' p.pk %}">{{ p.name }}</a> 
+             - Rs {{ p.price }} (Stock: {{ p.stock }})
+        </li>
+    {% endfor %}
+</ul>
