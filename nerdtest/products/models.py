@@ -8,7 +8,7 @@ class Tag(models.Model):
 
 
 class Product(models.Model):
-    name = models.CharField(max_length=255)
+    name = models.CharField(max_length=255, unique=True)
     description = models.TextField(blank=True)
     price = models.DecimalField(max_digits=10, decimal_places=2)
     stock = models.IntegerField()
@@ -62,3 +62,10 @@ class Variant(models.Model):
 
     def __str__(self):
         return f"{self.name} ({self.product.name})"
+
+    class Meta:
+        # Ensure SKU is unique across variants and variant name is unique per product
+        constraints = [
+            models.UniqueConstraint(fields=["sku"], name="unique_variant_sku"),
+            models.UniqueConstraint(fields=["product", "name"], name="unique_variant_name_per_product"),
+        ]

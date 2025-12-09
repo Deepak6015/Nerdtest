@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Page,
   Card,
@@ -8,9 +9,11 @@ import {
   Text,
   Button,
   Autocomplete,
+  Badge,
 } from "@shopify/polaris";
 
 function AddProduct() {
+  const navigate = useNavigate();
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [price, setPrice] = useState("");
@@ -38,6 +41,14 @@ function AddProduct() {
 
   const createNewTag = async () => {
     if (!tagInput.trim()) return;
+    // If a tag with this label exists, select it instead of creating duplicate
+    const existing = tagsOptions.find(o => o.label.toLowerCase() === tagInput.trim().toLowerCase());
+    if (existing) {
+      setSelectedTags(prev => prev.includes(existing.value) ? prev : [...prev, existing.value]);
+      setTagInput("");
+      return;
+    }
+
     const res = await fetch("http://127.0.0.1:8000/api/tags/", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -46,13 +57,22 @@ function AddProduct() {
     const newTag = await res.json();
     if (newTag.id) {
       await loadTags();
-      setSelectedTags([...selectedTags, String(newTag.id)]);
+      const val = String(newTag.id);
+      setSelectedTags(prev => prev.includes(val) ? prev : [...prev, val]);
       setTagInput("");
     }
   };
 
-  const handleImageUpload = (e) => setImages([...e.target.files]);
-  const handleVideoUpload = (e) => setVideos([...e.target.files]);
+  const handleImageUpload = (e) => {
+    const newFiles = Array.from(e.target.files);
+    setImages(prev => [...prev, ...newFiles]);
+  };
+  
+  const handleVideoUpload = (e) => {
+    const newFiles = Array.from(e.target.files);
+    setVideos(prev => [...prev, ...newFiles]);
+  };
+  
 
   const addVariant = () => setVariants([...variants, { name: "", sku: "", price: "", color: "", size: "", stock: "" }]);
   const removeVariant = (i) => setVariants(variants.filter((_, idx) => idx !== i));
@@ -120,6 +140,8 @@ function AddProduct() {
       // reset form (optional)
       setName(""); setDescription(""); setPrice(""); setStock("");
       setSelectedTags([]); setVariants([]); setImages([]); setVideos([]);
+      // redirect to product list
+      navigate('/');
 
     } catch (err) {
       console.error(err);
@@ -149,20 +171,70 @@ function AddProduct() {
             <Autocomplete
               options={tagsOptions}
               selected={selectedTags}
-              onSelect={setSelectedTags}
+              onSelect={(selected) => {
+                // `selected` may be a single value or array; append selected values instead of replacing
+                if (Array.isArray(selected)) {
+                  setSelectedTags(prev => {
+                    const merged = Array.from(new Set([...prev, ...selected]));
+                    return merged;
+                  });
+                } else {
+                  setSelectedTags(prev => prev.includes(selected) ? prev : [...prev, selected]);
+                }
+                setTagInput("");
+              }}
+              onRemove={(removed) => {
+                setSelectedTags(prev => prev.filter(s => s !== removed));
+              }}
               textField={<Autocomplete.TextField label="Tags" value={tagInput} onChange={setTagInput} placeholder="Search or add tag" />}
             />
-            <Button onClick={createNewTag}>Add new tag</Button>
+            <Button onClick={createNewTag}>Add / Select tag</Button>
+
+            {/* Selected tags preview */}
+            <div style={{ marginTop: 8 }}>
+              {selectedTags && selectedTags.length ? (
+                <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 6 }}>
+                  {selectedTags.map((val) => {
+                    const opt = tagsOptions.find(o => o.value === val);
+                    return (
+                      <Badge
+                        key={val}
+                        status="info"
+                        onRemove={() => setSelectedTags(prev => prev.filter(s => s !== val))}
+                      >
+                        {opt ? opt.label : val}
+                      </Badge>
+                    );
+                  })}
+                </div>
+              ) : null}
+            </div>
 
             <div style={{ marginTop: 12 }}>
               <label>Images:</label>
               <input type="file" multiple onChange={handleImageUpload} />
+              <Text tone="subdued">{images.length} file(s) selected</Text>
+              {/* Image previews */}
+              {images && images.length ? (
+                <div style={{ display: "flex", gap: 8, marginTop: 8, overflowX: "auto" }}>
+                  {images.map((f, i) => {
+                    const url = URL.createObjectURL(f);
+                    return (
+                      <div key={i} style={{ width: 100, height: 80, borderRadius: 6, overflow: "hidden", flex: "0 0 auto" }}>
+                        <img src={url} alt={f.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : null}
             </div>
 
             <div>
               <label>Videos:</label>
               <input type="file" multiple onChange={handleVideoUpload} />
+              <Text tone="subdued">{videos.length} file(s) selected</Text>
             </div>
+
 
             <Card sectioned>
               {!showVariants ? <Button onClick={() => setShowVariants(true)}>Add Variants</Button> : null}

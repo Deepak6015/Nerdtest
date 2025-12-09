@@ -17,6 +17,8 @@ function ProductList() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE = 5;
   const navigate = useNavigate();
 
   const fetchProducts = async () => {
@@ -46,11 +48,14 @@ function ProductList() {
     p.name.toLowerCase().includes(search.toLowerCase())
   );
 
+  // Pagination calculations
+  const pageCount = Math.max(1, Math.ceil(filteredProducts.length / PAGE_SIZE));
+  const currentPage = Math.min(Math.max(1, page), pageCount);
+  const startIndex = (currentPage - 1) * PAGE_SIZE;
+  const currentProducts = filteredProducts.slice(startIndex, startIndex + PAGE_SIZE);
+
   return (
     <Page fullWidth>
-      {/* ----------------------------- */}
-      {/*         CUSTOM HEADER         */}
-      {/* ----------------------------- */}
       <div style={{ padding: "20px 0" }}>
         <Text variant="heading2xl" fontWeight="bold">
           AdFlow – Product Management
@@ -81,7 +86,7 @@ function ProductList() {
             ) : (
               <IndexTable
                 resourceName={{ singular: "product", plural: "products" }}
-                itemCount={filteredProducts.length}
+                itemCount={currentProducts.length}
                 headings={[
                   { title: "Image" },
                   { title: "Name" },
@@ -92,9 +97,10 @@ function ProductList() {
                   { title: "Actions" },
                 ]}
               >
-                {filteredProducts.map((p, i) => {
+                {currentProducts.map((p, i) => {
+                  // prefer absolute `image_url` from the API, fall back to `image` path
                   const img =
-                    p.images?.[0]?.image || "https://via.placeholder.com/72";
+                    p.images?.[0]?.image_url || p.images?.[0]?.image || "https://via.placeholder.com/72";
 
                   return (
                     <IndexTable.Row
@@ -145,6 +151,23 @@ function ProductList() {
                   );
                 })}
               </IndexTable>
+            )}
+
+            {/* Pagination controls */}
+            {!loading && (
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: 12 }}>
+                <div>
+                  <Button disabled={currentPage <= 1} onClick={() => setPage(currentPage - 1)}>Prev</Button>
+                </div>
+                <div>
+                  <Text>
+                    Page {currentPage} of {pageCount} — {filteredProducts.length} products
+                  </Text>
+                </div>
+                <div>
+                  <Button disabled={currentPage >= pageCount} onClick={() => setPage(currentPage + 1)}>Next</Button>
+                </div>
+              </div>
             )}
           </Card>
         </Layout.Section>

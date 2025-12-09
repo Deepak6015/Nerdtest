@@ -5,7 +5,7 @@ import { EditIcon } from "@shopify/polaris-icons";
 const SettingsPage = () =>  {
 
   return (
-    <Card padding="400">
+    <page>
       <BlockStack gap="600">
         <Text as="h1" variant="headingLg">
           Settings
@@ -121,7 +121,7 @@ const SettingsPage = () =>  {
           </BlockStack>
         </Card>
       </BlockStack>
-    </Card>
+      </page>
   );
 }
 export default SettingsPage;

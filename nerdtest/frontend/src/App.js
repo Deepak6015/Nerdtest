@@ -11,6 +11,8 @@ import ContactForm from "./ContactForm";
 import ProductDetail from "./ProductDetail";
 import Home from "./Home";
 import SettingsPage from "./Setting";
+import FeedsManagement from "./Feeds";
+import Plans from "./Plans";
 
 // Wrapper to connect Polaris Navigation with React Router navigation
 function AppNavigation() {
@@ -25,6 +27,10 @@ function AppNavigation() {
             onClick: () => navigate("/home"),
           },
           {
+            label: "Feeds",
+            onClick: () => navigate("/feed"),
+          },
+          {
             label: "View Products",
             onClick: () => navigate("/"),
           },
@@ -37,8 +43,13 @@ function AppNavigation() {
             onClick: () => navigate("/contact"),
           },
           {
-            label: "Setting",
+            label: "Settings",
             onClick: () => navigate("/setting"),
+          }
+          ,
+          {
+            label: "Plans",
+            onClick: () => navigate("/plans"),
           }
           
         ]}
@@ -59,6 +70,8 @@ function App() {
             <Route path="/contact" element={<ContactForm />} />
             <Route path="/products/:id" element={<ProductDetail />} />  
             <Route path="/setting" element={<SettingsPage/>} />     
+            <Route path="/feed" element={<FeedsManagement/>} />   
+            <Route path="/plans" element={<Plans/>} />
             
           </Routes>
         </Frame>
